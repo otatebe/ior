@@ -1148,6 +1148,7 @@ void file_test(const int iteration, const int ntasks, const char *path, rank_pro
         expected_items = ReadStoneWallingIterations(stoneWallingStatusFile);
         if(expected_items >= 0){
           items = expected_items;
+          items_per_dir = expected_items;
           progress->items_per_dir = items;
         }
         if (rank == 0) {
