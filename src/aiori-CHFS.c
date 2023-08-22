@@ -1,5 +1,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
 #include <chfs.h>
 #include "ior.h"
 #include "aiori.h"
@@ -215,12 +217,21 @@ CHFS_rmdir(const char *fn, aiori_mod_opt_t *param)
 int
 CHFS_access(const char *fn, int mode, aiori_mod_opt_t *param)
 {
-	struct stat sb;
+	int fd, saved_errno;
 
 	if (hints->dryRun)
 		return (0);
 
-	return (chfs_stat(fn, &sb));
+	saved_errno = errno;
+	fd = chfs_open(fn, O_RDONLY);
+	if (fd < 0) {
+		if (errno == EISDIR) {
+			errno = saved_errno;
+			return (0);
+		} else
+			return (-1);
+	}
+	return (chfs_close(fd));
 }
 
 int
