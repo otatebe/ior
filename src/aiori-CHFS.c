@@ -12,6 +12,9 @@ struct CHFS_File {
 
 struct chfs_option {
 	size_t chunk_size;
+	size_t buf_size;
+	int async_access;
+	size_t rdma_thresh;
 };
 
 option_help *
@@ -27,12 +30,24 @@ CHFS_options(aiori_mod_opt_t **init_backend_options,
 
 	if (o->chunk_size > 0)
 		chfs_set_chunk_size(o->chunk_size);
+	if (o->buf_size > 0)
+		chfs_set_buf_size(o->buf_size);
+	if (o->async_access > 0)
+		chfs_set_async_access(o->async_access);
+	if (o->rdma_thresh > 0)
+		chfs_set_rdma_thresh(o->rdma_thresh);
 
 	*init_backend_options = (aiori_mod_opt_t *)o;
 
 	option_help h[] = {
 	    {0, "chfs.chunk_size", "chunk size", OPTION_FLAG, 'd',
 		    &o->chunk_size},
+	    {0, "chfs.buf_size", "buf size", OPTION_FLAG, 'd',
+		    &o->buf_size},
+	    {0, "chfs.async_access", "async access mode", OPTION_FLAG, 'd',
+		    &o->async_access},
+	    {0, "chfs.rdma_thresh", "rdma thresh size", OPTION_FLAG, 'd',
+		    &o->rdma_thresh},
 	    LAST_OPTION
 	};
 	option_help *help = malloc(sizeof(h));
