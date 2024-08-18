@@ -222,16 +222,7 @@ CHFS_access(const char *fn, int mode, aiori_mod_opt_t *param)
 	if (hints->dryRun)
 		return (0);
 
-	saved_errno = errno;
-	fd = chfs_open(fn, O_RDONLY);
-	if (fd < 0) {
-		if (errno == EISDIR) {
-			errno = saved_errno;
-			return (0);
-		} else
-			return (-1);
-	}
-	return (chfs_close(fd));
+	return (chfs_access(fn, mode));
 }
 
 int
