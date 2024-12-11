@@ -49,8 +49,11 @@ AC_CHECK_HEADERS([fcntl.h libintl.h stdlib.h string.h strings.h sys/ioctl.h sys/
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
 
+AC_CHECK_TYPES([MPI_Count], [], [], [[#include <mpi.h>]])
+
 # Checks for library functions.
 AC_CHECK_FUNCS([sysconf gettimeofday memset mkdir pow putenv realpath regcomp sqrt strcasecmp strchr strerror strncasecmp strstr uname statfs statvfs])
+AC_CHECK_FUNCS([MPI_File_read_c])
 AC_SEARCH_LIBS([sqrt], [m], [],
         [AC_MSG_ERROR([Math library not found])])
 
@@ -140,6 +143,8 @@ AM_COND_IF([HAVE_GPU_DIRECT],[
   AC_DEFINE([HAVE_GPU_DIRECT], [], [GPUDirect API found])
   ])
 
+
+AC_CHECK_FUNCS
 
 
 # Check for system capabilities
@@ -336,7 +341,12 @@ AC_ARG_WITH([daos],
     [], [with_daos=no])
 AS_IF([test "x$with_daos" != xno], [
     DAOS="yes"
-    LDFLAGS="$LDFLAGS -L$with_daos/lib64 -Wl,--enable-new-dtags -Wl,-rpath=$with_daos/lib64"
+    if test -d $with_daos/lib/x86_64-linux-gnu/; then
+        DAOS_LIB_DIR=$with_daos/lib/x86_64-linux-gnu
+    else
+        DAOS_LIB_DIR=$with_daos/lib64
+    fi
+    LDFLAGS="$LDFLAGS -L$DAOS_LIB_DIR -Wl,--enable-new-dtags -Wl,-rpath=$DAOS_LIB_DIR"
     CPPFLAGS="$CPPFLAGS -I$with_daos/include"
     AC_CHECK_HEADERS(gurt/common.h,, [unset DAOS])
     AC_CHECK_HEADERS(daos.h,, [unset DAOS])
@@ -377,6 +387,14 @@ PKG_CHECK_MODULES([CHFS], [chfs],
    AC_SUBST(CHFS_RPATH)],
   [with_chfs=no])
 AM_CONDITIONAL([USE_CHFS_AIORI], [test x$with_chfs != xno])
+
+# FINCHFS support
+PKG_CHECK_MODULES([FINCHFS], [finchfs],
+  [AC_DEFINE([USE_FINCHFS_AIORI], [], [Build FINCHFS backend AIORI])
+   FINCHFS_RPATH=$(pkg-config --libs-only-L finchfs | sed 's/-L/-Wl,-rpath=/g')
+   AC_SUBST(FINCHFS_RPATH)],
+  [with_finchfs=no])
+AM_CONDITIONAL([USE_FINCHFS_AIORI], [test x$with_finchfs != xno])
 
 # aws4c is needed for the S3 backend (see --with-S3, below).
 # Version 0.5.2 of aws4c is available at https://github.com/jti-lanl/aws4c.git
